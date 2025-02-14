@@ -1,9 +1,9 @@
-from westeros.routes import api_routes as westeros_apis
+from triggers.routes import api_routes as triggers_apis
 
 
 from app_instance import app
 
-all_routes = westeros_apis
+all_routes = triggers_apis
 
 
 def configure_app_routes():
