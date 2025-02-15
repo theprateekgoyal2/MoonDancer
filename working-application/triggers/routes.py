@@ -1,5 +1,6 @@
 from .apis import *
 
 api_routes = [
-    ('/api/triggers/testing/quotes', testing, ['GET'])
+    ('/api/triggers', manage_triggers_api, ['GET', 'POST']),
+    ('/api/triggers/fire', fire_api_trigger_api, ['GET'])
 ]
