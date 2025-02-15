@@ -1,7 +1,7 @@
 import logging
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from common.env import SQL_DBPASS, SQL_DBUSER, SQL_INSTANCE_URI
+from common.env import SQL_INSTANCE_URI
 
 
 engine = create_engine(SQL_INSTANCE_URI)
