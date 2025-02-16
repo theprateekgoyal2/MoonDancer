@@ -1,7 +1,7 @@
 import logging
 from celery_config import celery
 from celery.schedules import crontab
-from .utils import execute_scheduled_triggers, update_event_states
+from triggers.utils import execute_scheduled_triggers, update_event_states
 
 
 @celery.task(name="celery_config.celery_worker.execute_scheduled_triggers_helper")
@@ -18,7 +18,7 @@ def update_event_states_helper():
     logging.info("Task `update_event_states_helper` completed execution.")
 
 
-# Schedule the task to run every minute
+# Schedules the tasks, basically sends the tasks to redis-queue
 celery.conf.beat_schedule = {
     'execute_scheduled_triggers_task': {
         'task': 'celery_config.celery_worker.execute_scheduled_triggers_helper',
