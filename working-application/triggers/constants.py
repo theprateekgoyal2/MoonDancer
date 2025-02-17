@@ -9,3 +9,4 @@ class TriggerType(Enum):
 class EventLogsStatus(Enum):
     ACTIVE = 'active'
     ARCHIVED = 'archived'
+    DELETE = 'delete'

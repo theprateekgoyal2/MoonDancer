@@ -118,38 +118,40 @@ def execute_scheduled_triggers(session):
 
 
 @session_wrap
-def update_event_states(session):
+def update_event_states(session: any):
     """
     Updates event logs:
-    - Archives logs created in the last 2 hours.
-    - Deletes logs updated in the last 46 hours.
+    - Moves records older than 2 hours but less than 48 hours to 'archived'.
+    - Moves records older than 48 hours to 'delete'.
     """
     logging.info("this is scheduled task for updating event logs states")
     try:
-        now = datetime.now(ist_timezone)
+        now = datetime.utcnow()
         two_hours_ago = now - timedelta(hours=2)
         forty_eight_hours_ago = now - timedelta(hours=48)
 
-        archived_logs = 0
-        deleted_logs = 0
+        archived_state_logs = 0
+        delete_state_logs = 0
 
-        event_logs = session.query(EventLogs).filter(
-            EventLogs.dt_created <= forty_eight_hours_ago
+        # Fetch all records older than 2 hours
+        logs = session.query(EventLogs).filter(
+            EventLogs.dt_created <= two_hours_ago
         ).all()
 
-        for log in event_logs:
-            if log.status == EventLogsStatus.ACTIVE.value:
-                # Archive recent logs
-                log.status = EventLogsStatus.ARCHIVED.value
-                archived_logs += 1
-            else:
-                # Delete archived logs
-                session.delete(log)
-                deleted_logs += 1
+        # Process records based on age
+        for log in logs:
+            if forty_eight_hours_ago < log.dt_created <= two_hours_ago:
+                log.status = EventLogsStatus.ARCHIVED.value  # Move to archived
+                archived_state_logs += 1
 
+            elif log.dt_created <= forty_eight_hours_ago:
+                log.status = EventLogsStatus.DELETE.value  # Move to delete state
+                delete_state_logs += 1
+
+        # Commit the changes
         session.commit()
-        logging.info(f"{archived_logs} logs archived, {deleted_logs} logs deleted.")
-        print(f"{archived_logs} logs archived, {deleted_logs} logs deleted.")
+        print(f"Processed {len(logs)} records: {archived_state_logs} logs are moved to archived state "
+              f"and {delete_state_logs} logs are moved to delete state.")
 
     except SQLAlchemyError as e:
         session.rollback()
@@ -182,3 +184,23 @@ def get_recurring_triggers(now: datetime, session: any) -> List[Triggers]:
     ).all()
 
     return recurring_triggers
+
+
+@session_wrap
+def delete_events(session: any):
+    logging.info("this is scheduled task for deleting event logs")
+    try:
+        logs = session.query(EventLogs).filter(EventLogs.status == 'delete').all()
+        for log in logs:
+            session.delete(log)
+
+        session.commit()
+        print(f"{len(logs)}: logs are deleted")
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        logging.info(f"Database error: {e}")
+
+    except Exception as e:
+        session.rollback()
+        logging.info(f"Unexpected error: {e}")

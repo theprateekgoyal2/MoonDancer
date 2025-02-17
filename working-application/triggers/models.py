@@ -100,7 +100,7 @@ class EventLogs(Base):
         return f'<EventLog: {self.prim_id}>'
 
     @classmethod
-    def create_event_log(cls, trigger: Triggers, session):
+    def create_event_log(cls, trigger, session):
         """
         Logs an event when a trigger fires.
         """
@@ -114,7 +114,7 @@ class EventLogs(Base):
 
         session.add(new_event)
         session.commit()
-        print(f"📝 Event Logged: Trigger {trigger.prim_id} at {new_event.fired_at}")
+        print(f"Event Logged: Trigger {trigger.prim_id} at {new_event.fired_at}")
 
     @classmethod
     def get_by_id(cls, session, log_id):
