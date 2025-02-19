@@ -1,7 +1,7 @@
 import logging
 from celery_config import celery
 from celery.schedules import crontab
-from triggers.utils import execute_scheduled_triggers, update_event_states, delete_events
+from triggers.executors import execute_scheduled_triggers, update_event_states, delete_events
 
 
 @celery.task(name="celery_config.celery_worker.execute_scheduled_triggers_helper")

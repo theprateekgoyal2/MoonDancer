@@ -1,5 +1,5 @@
 from flask import request
-from .utils import create_triggers_helper, get_triggers_helper, fire_trigger_helper
+from .utils import create_triggers_helper, get_triggers_helper, fire_trigger_helper, get_event_logs
 
 
 def manage_triggers_api():
@@ -22,3 +22,12 @@ def fire_api_trigger_api():
         return {'error': 'Trigger id needed to fire a trigger'}
 
     return fire_trigger_helper(trigger_id)
+
+
+def get_event_logs_api():
+    archived = False
+
+    if request.args.get("archived") == "true":
+        archived = True
+
+    return get_event_logs(archived)

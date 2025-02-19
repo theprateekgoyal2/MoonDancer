@@ -1,17 +1,12 @@
-import pytz
+import json
 import logging
+from redis_config import redis_client
 from datetime import datetime, date, timedelta
-from sqlalchemy import func, extract
-from sqlalchemy.exc import SQLAlchemyError
-from typing import List
 
 from sql_config.utils import session_wrap
 from .models import Triggers, EventLogs
 from .validations import validate_triggers_creation_payload
-from .constants import TriggerType, EventLogsStatus
-
-
-ist_timezone = pytz.timezone('Asia/Kolkata')
+from .constants import TriggerType, EventLogsStatus, CACHEKEYS
 
 
 @session_wrap
@@ -59,10 +54,11 @@ def fire_trigger_helper(trigger_id: int, session: any) -> dict:
         if not trigger:
             return {"error": "Trigger not found"}
 
+        EventLogs.create_event_log(trigger, session)
         print(f"{trigger.trigger_type} Trigger Fired: {trigger_id}")
 
         return {
-            "message": f"API Trigger {trigger_id} fired successfully!",
+            "message": f"Trigger {trigger_id} fired successfully!",
             "trigger_id": trigger_id,
             "payload": trigger.api_payload
         }
@@ -73,134 +69,46 @@ def fire_trigger_helper(trigger_id: int, session: any) -> dict:
 
 
 @session_wrap
-def execute_scheduled_triggers(session):
+def get_event_logs(archived: bool, session: any) -> dict:
     """
-    Segregate scheduled triggers and execute them in order:
-    1. One-time triggers (schedule_date == today)
-    2. Recurring daily triggers & Interval-based triggers (set schedule_time = now + interval the first time)
+    Fetch event logs from the last 2 hours by default, with an option to see archived logs.
+    Uses caching to optimize frequent calls.
     """
-    logging.info("this is scheduled task for scheduled triggers")
+    now = datetime.utcnow()
+    two_hours_ago = now - timedelta(hours=2)
 
-    try:
-        now = datetime.now(ist_timezone)
-        today = now.date()
+    cache_key = CACHEKEYS.ACTIVE.value
+    if archived:
+        cache_key = CACHEKEYS.ARCHIVED.value
 
-        # 1. Process One-Time Scheduled Triggers
-        one_time_triggers = get_one_time_triggers(today, now, session)
+    cached_data = redis_client.get(cache_key)
+    if cached_data:
+        print("Returning cached event logs!")
+        return json.loads(cached_data)
 
-        # 2. Process Recurring Daily Triggers & Interval-Based Triggers
-        recurring_triggers = get_recurring_triggers(now, session)
+    # Query logs from DB
+    if archived:
+        logs = session.query(EventLogs).filter(EventLogs.status == EventLogsStatus.ARCHIVED.value).all()
+    else:
+        logs = session.query(EventLogs).filter(EventLogs.dt_created >= two_hours_ago).all()
 
-        resultant_triggers = one_time_triggers + recurring_triggers
+    logs_list = [{
+        "id": log.prim_id,
+        "trigger_id": log.trigger_id,
+        "status": log.status,
+        "trigger_type": log.trigger_type,
+        "fired_at": str(log.fired_at),
+        "api_payload": log.api_payload
+    } for log in logs]
 
-        for trigger in resultant_triggers:
-            EventLogs.create_event_log(trigger, session)
+    response_data = {
+        "message": "success",
+        "total_logs": len(logs_list),
+        "logs": logs_list
+    }
 
-            if trigger.schedule_date:
-                print(f"One-time Scheduled Trigger Fired: {trigger.prim_id} at {now}")
+    # Cache response for 5 minutes
+    redis_client.setex(cache_key, 300, json.dumps(response_data))  # Cache for 300 sec (5 min)
 
-            else:
-                print(f"Recurring Trigger Fired: {trigger.prim_id} at {now}")
-                if trigger.interval:
-                    # Reset schedule_time for the next execution
-                    trigger.schedule_time = (now + timedelta(minutes=float(trigger.interval))).strftime("%H:%M:%S")
-
-        session.commit()
-        logging.info("changes commited successfully")
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        logging.info(f"Database error: {e}")
-
-    except Exception as e:
-        session.rollback()
-        logging.info(f"Unexpected error: {e}")
-
-
-@session_wrap
-def update_event_states(session: any):
-    """
-    Updates event logs:
-    - Moves records older than 2 hours but less than 48 hours to 'archived'.
-    - Moves records older than 48 hours to 'delete'.
-    """
-    logging.info("this is scheduled task for updating event logs states")
-    try:
-        now = datetime.utcnow()
-        two_hours_ago = now - timedelta(hours=2)
-        forty_eight_hours_ago = now - timedelta(hours=48)
-
-        archived_state_logs = 0
-        delete_state_logs = 0
-
-        # Fetch all records older than 2 hours
-        logs = session.query(EventLogs).filter(
-            EventLogs.dt_created <= two_hours_ago
-        ).all()
-
-        # Process records based on age
-        for log in logs:
-            if forty_eight_hours_ago < log.dt_created <= two_hours_ago:
-                log.status = EventLogsStatus.ARCHIVED.value  # Move to archived
-                archived_state_logs += 1
-
-            elif log.dt_created <= forty_eight_hours_ago:
-                log.status = EventLogsStatus.DELETE.value  # Move to delete state
-                delete_state_logs += 1
-
-        # Commit the changes
-        session.commit()
-        print(f"Processed {len(logs)} records: {archived_state_logs} logs are moved to archived state "
-              f"and {delete_state_logs} logs are moved to delete state.")
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        logging.info(f"Database error: {e}")
-
-    except Exception as e:
-        session.rollback()
-        logging.info(f"Unexpected error: {e}")
-
-
-def get_one_time_triggers(today: date, now: datetime, session: any) -> List[Triggers]:
-
-    one_time_triggers = session.query(Triggers).filter(
-        Triggers.trigger_type == TriggerType.SCHEDULED.value,
-        func.date(Triggers.schedule_date) == today,
-        extract('hour', Triggers.schedule_date) == now.hour,
-        extract('minute', Triggers.schedule_date) == now.minute
-    ).all()
-
-    return one_time_triggers
-
-
-def get_recurring_triggers(now: datetime, session: any) -> List[Triggers]:
-
-    recurring_triggers = session.query(Triggers).filter(
-        Triggers.trigger_type == TriggerType.SCHEDULED.value,
-        Triggers.schedule_date.is_(None),  # Recurring daily
-        extract('hour', Triggers.schedule_time) == now.hour,
-        extract('minute', Triggers.schedule_time) == now.minute
-    ).all()
-
-    return recurring_triggers
-
-
-@session_wrap
-def delete_events(session: any):
-    logging.info("this is scheduled task for deleting event logs")
-    try:
-        logs = session.query(EventLogs).filter(EventLogs.status == 'delete').all()
-        for log in logs:
-            session.delete(log)
-
-        session.commit()
-        print(f"{len(logs)}: logs are deleted")
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        logging.info(f"Database error: {e}")
-
-    except Exception as e:
-        session.rollback()
-        logging.info(f"Unexpected error: {e}")
+    print("Data fetched from DB & cached.")
+    return response_data
