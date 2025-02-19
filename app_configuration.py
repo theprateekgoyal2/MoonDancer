@@ -1,5 +1,3 @@
-import os
-from flask import request
 from common.routes import configure_app_routes
 from common.models import all_models
 
