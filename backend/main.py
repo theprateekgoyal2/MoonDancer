@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.insert(0, 'working-application/')
+sys.path.insert(0, '/')
 from app_instance import app
 from app_configuration import configure_current_application
 

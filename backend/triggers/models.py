@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 import pytz
 from sqlalchemy import (
-    Column, String, Integer, DateTime, Boolean, func, ForeignKey, JSON, Time
+    extract, func, Column, String, Integer, DateTime, Boolean, ForeignKey, JSON, Time
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.exc import SQLAlchemyError
 
 from sql_config import Base
 from .constants import TriggerType, EventLogsStatus
