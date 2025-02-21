@@ -1,6 +1,3 @@
-from enum import Enum
-
-
 TriggerTypeValue = {
     'Scheduled': 'scheduled',
     'API Based': 'api'

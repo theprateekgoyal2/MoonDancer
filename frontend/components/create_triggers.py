@@ -6,7 +6,9 @@ from frontend.apis.apis import create_triggers
 
 
 def initialize_session_state():
-    """Initialize session state variables if not already set."""
+    """
+    Initialize session state variables if not already set.
+    """
     if "visibility" not in st.session_state:
         st.session_state.visibility = "visible"
         st.session_state.disabled = False
@@ -15,20 +17,24 @@ def initialize_session_state():
         st.session_state.placeholder = "This is placeholder"
 
 
-def handle_api_based_trigger():
-    """Handles the input and submission for API-based triggers."""
+def handle_api_based_trigger(option: str):
+    """
+    Handles the input and submission for API-based triggers.
+    """
     json_input = st.text_area("Enter JSON Payload", placeholder="Enter your payload here...")
 
     if st.button("Submit"):
         payload = {
-            "trigger_type": TriggerTypeValue.get("API Based"),
+            "trigger_type": TriggerTypeValue.get(option),
             "api_payload": json.loads(json_input)  # Store the JSON input
         }
         submit_trigger(payload)
 
 
 def handle_scheduled_trigger():
-    """Handles input selection for scheduled triggers."""
+    """
+    Handles input selection for scheduled triggers.
+    """
     option1 = st.radio("Select Scheduled Trigger Type:", ["Daily", "Fixed Interval", "One time"], index=None)
 
     time_selected, trigger_date, trigger_time, datetime_value, time_interval = None, None, None, None, None
@@ -51,7 +57,9 @@ def handle_scheduled_trigger():
 
 
 def create_trigger_payload(option, option1, time_selected, datetime_value, time_interval):
-    """Creates the payload for submitting an event trigger."""
+    """
+    Creates the payload for submitting an event trigger.
+    """
     return {
         "trigger_type": TriggerTypeValue.get(option),
         "sub_type": SubTypeValue.get(option1),
@@ -62,7 +70,9 @@ def create_trigger_payload(option, option1, time_selected, datetime_value, time_
 
 
 def submit_trigger(payload):
-    """Handles trigger submission and response display."""
+    """
+    Handles trigger submission and response display.
+    """
     creation_result = create_triggers(payload)
     if "error" in creation_result:
         st.error(creation_result["error"])
@@ -71,7 +81,9 @@ def submit_trigger(payload):
 
 
 def create_event_triggers():
-    """Main function to create event triggers."""
+    """
+    Main function to create event triggers.
+    """
     st.title("📝 Create Events Triggers")
 
     # Initialize session state
@@ -81,7 +93,7 @@ def create_event_triggers():
     option = st.radio("Select Trigger Type:", ["Scheduled", "API Based"], index=None)
 
     if option == "API Based":
-        handle_api_based_trigger()
+        handle_api_based_trigger(option)
         return  # Stop further execution if API Based is selected
 
     # Handle scheduled triggers

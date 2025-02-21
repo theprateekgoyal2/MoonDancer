@@ -5,8 +5,9 @@ from redis_config import redis_client
 from datetime import datetime, date, timedelta
 
 from sql_config.utils import session_wrap
-from .models import Triggers, EventLogs
-from .validations import validate_triggers_creation_payload, validate_params_to_fetch_triggers
+from .models import Triggers, EventLogs, ist_timezone
+from .validations import validate_triggers_creation_payload, validate_params_to_fetch_triggers, \
+    validate_trigger_update_payload
 from .constants import TriggerType, ScheduledTriggerSubType, EventLogsStatus, CACHEKEYS
 
 
@@ -147,3 +148,57 @@ def get_triggers_based_on_trigger_type(session: any, trigger_type: str, sub_type
         )
 
     return query_results
+
+
+@session_wrap
+def update_triggers_helper(trigger_id: str, payload: dict, session: any) -> dict:
+    trigger = Triggers.get_by_id(session, trigger_id)
+    if not trigger:
+        return {'error': f'No trigger found with this trigger_id: {trigger_id}'}
+
+    validation_result = validate_trigger_update_payload(trigger, payload)
+    if 'error' in validation_result:
+        return validation_result
+
+    sub_type = payload.get('sub_type')
+    schedule_date = payload.get('schedule_date')
+    schedule_time = payload.get('schedule_time')
+    interval = payload.get('interval')
+    api_payload = payload.get('api_payload')
+
+    if interval:
+        schedule_time = (datetime.now(ist_timezone) + timedelta(minutes=float(interval))).strftime("%H:%M:%S")
+
+    trigger.sub_type = sub_type
+    trigger.schedule_date = schedule_date
+    trigger.schedule_time = schedule_time
+    trigger.interval = interval
+    trigger.api_payload = api_payload
+
+    try:
+        session.commit()
+        logging.info(f"trigger with trigger_id: {trigger_id} updated")
+        return {
+            'message': 'Trigger Updated successfully',
+            'Trigger_details': trigger.to_dict()
+        }
+
+    except Exception as e:
+        session.rollback()
+        return {'error': f'An error occurred: {str(e)}'}
+
+
+@session_wrap
+def delete_trigger_helper(trigger_id: str, session: any) -> dict:
+    try:
+        trigger = Triggers.get_by_id(session, trigger_id)
+        if not trigger:
+            return {'error': f'No trigger found with this trigger_id: {trigger_id}'}
+
+        session.delete(trigger)
+        session.commit()
+        return {'message': 'Trigger deleted successfully!'}
+
+    except Exception as e:
+        session.rollback()
+        return {'error': f'An error occurred: {str(e)}'}
