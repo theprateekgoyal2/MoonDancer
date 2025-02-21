@@ -18,6 +18,7 @@ class Triggers(Base):
 
     prim_id = Column(Integer, primary_key=True)
     trigger_type = Column(String(20), nullable=False)  # "scheduled" or "api"
+    sub_type = Column(String(20), nullable=True)  # "daily", "fixed_interval", "one_time"
     schedule_date = Column(DateTime, nullable=True)  # If one-time trigger
     schedule_time = Column(Time, nullable=True)  # If daily recurring
     interval = Column(Integer, nullable=True)  # If interval-based (e.g., every 10 min)
@@ -32,6 +33,7 @@ class Triggers(Base):
     def create_trigger(
             cls,
             trigger_type: str,
+            sub_type: str = None,
             schedule_date: str = None,
             schedule_time: str = None,
             interval: int = None,
@@ -39,6 +41,7 @@ class Triggers(Base):
     ):
         trigger = cls()
         trigger.trigger_type = trigger_type
+        trigger.sub_type = sub_type if sub_type else None
 
         schedule_date = datetime.fromisoformat(schedule_date) if schedule_date else None
         api_payload = api_payload if api_payload else None

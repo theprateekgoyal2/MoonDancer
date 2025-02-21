@@ -11,9 +11,10 @@ def manage_triggers_api():
         return create_triggers_helper(payload)
 
     if request.method == 'GET':
-        trigger_id = request.args.get('trigger_id')
+        trigger_type = request.args.get('trigger_type')
+        sub_type = request.args.get('sub_type')
 
-        return get_triggers_helper(trigger_id)
+        return get_triggers_helper(trigger_type, sub_type)
 
 
 def fire_api_trigger_api():

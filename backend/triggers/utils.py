@@ -1,12 +1,13 @@
 import json
 import logging
+from typing import List
 from redis_config import redis_client
 from datetime import datetime, date, timedelta
 
 from sql_config.utils import session_wrap
 from .models import Triggers, EventLogs
-from .validations import validate_triggers_creation_payload
-from .constants import TriggerType, EventLogsStatus, CACHEKEYS
+from .validations import validate_triggers_creation_payload, validate_params_to_fetch_triggers
+from .constants import TriggerType, ScheduledTriggerSubType, EventLogsStatus, CACHEKEYS
 
 
 @session_wrap
@@ -16,13 +17,14 @@ def create_triggers_helper(payload: dict, session: any = None) -> dict:
         return validation_result
 
     trigger_type = payload.get('trigger_type')
+    sub_type = payload.get('sub_type')
     schedule_date = payload.get('schedule_date')    # For one time
     schedule_time = payload.get('schedule_time')    # For daily recurring
     interval = payload.get('interval')  # For recurring interval
     api_payload = payload.get('api_payload')
 
     try:
-        trigger = Triggers.create_trigger(trigger_type, schedule_date, schedule_time, interval, api_payload)
+        trigger = Triggers.create_trigger(trigger_type, sub_type, schedule_date, schedule_time, interval, api_payload)
         session.add(trigger)
         session.commit()
 
@@ -37,13 +39,15 @@ def create_triggers_helper(payload: dict, session: any = None) -> dict:
 
 
 @session_wrap
-def get_triggers_helper(trigger_id: int = None, session: any = None) -> dict:
-    if not trigger_id:
-        query_results = session.query(Triggers).order_by(Triggers.dt_created).all()
+def get_triggers_helper(trigger_type: str, sub_type: str = None, session: any = None) -> dict:
 
-        triggers_list = [trigger.to_dict() for trigger in query_results]
-    else:
-        triggers_list = [Triggers.get_by_id(session, trigger_id).to_dict()]
+    validation_result = validate_params_to_fetch_triggers(trigger_type, sub_type)
+    if 'error' in validation_result:
+        return validation_result
+
+    query_results = get_triggers_based_on_trigger_type(session, trigger_type, sub_type)
+
+    triggers_list = [trigger.to_dict() for trigger in query_results]
 
     response_data = {
         "message": "success",
@@ -119,3 +123,27 @@ def get_event_logs(archived: bool, session: any) -> dict:
 
     print("Data fetched from DB & cached.")
     return response_data
+
+
+def get_triggers_based_on_trigger_type(session: any, trigger_type: str, sub_type: str = None) -> List[Triggers]:
+
+    if trigger_type == TriggerType.API.value:
+        query_results = (
+            session.query(Triggers)
+            .filter(Triggers.trigger_type == trigger_type)
+            .order_by(Triggers.dt_created)
+            .all()
+        )
+
+    else:
+        query_results = (
+            session.query(Triggers)
+            .filter(
+                Triggers.trigger_type == trigger_type,
+                Triggers.sub_type == sub_type
+            )
+            .order_by(Triggers.dt_created)
+            .all()
+        )
+
+    return query_results
