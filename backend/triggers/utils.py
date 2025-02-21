@@ -40,11 +40,18 @@ def create_triggers_helper(payload: dict, session: any = None) -> dict:
 def get_triggers_helper(trigger_id: int = None, session: any = None) -> dict:
     if not trigger_id:
         query_results = session.query(Triggers).order_by(Triggers.dt_created).all()
-        return {
-            'triggers': [trigger.to_dict() for trigger in query_results]
-        }
 
-    return Triggers.get_by_id(session, trigger_id).to_dict()
+        triggers_list = [trigger.to_dict() for trigger in query_results]
+    else:
+        triggers_list = [Triggers.get_by_id(session, trigger_id).to_dict()]
+
+    response_data = {
+        "message": "success",
+        "total_triggers": len(triggers_list),
+        "triggers": triggers_list
+    }
+
+    return response_data
 
 
 @session_wrap
