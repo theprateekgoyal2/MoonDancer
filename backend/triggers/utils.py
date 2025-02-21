@@ -196,6 +196,7 @@ def delete_trigger_helper(trigger_id: str, session: any) -> dict:
             return {'error': f'No trigger found with this trigger_id: {trigger_id}'}
 
         session.delete(trigger)
+        session.commit()
         return {'message': 'Trigger deleted successfully!'}
 
     except Exception as e:

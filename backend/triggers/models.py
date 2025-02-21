@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 import pytz
 from sqlalchemy import (
@@ -75,6 +76,7 @@ class Triggers(Base):
         return {
             'trigger_id': self.prim_id,
             'trigger_type': self.trigger_type,
+            'sub_type': self.sub_type,
             'schedule_date': self.schedule_date,
             'schedule_time': str(self.schedule_time),
             'interval': self.interval,
