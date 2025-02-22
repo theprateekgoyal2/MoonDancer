@@ -14,5 +14,10 @@ def hello():
     return '<h1>Hello World!</h1><br><i>Server is running</i>'
 
 
+# Required for Vercel to detect the app
+def handler(event, context):
+    return app(event, context)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
