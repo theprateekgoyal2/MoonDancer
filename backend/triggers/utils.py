@@ -160,7 +160,7 @@ def update_triggers_helper(trigger_id: str, payload: dict, session: any) -> dict
     if 'error' in validation_result:
         return validation_result
 
-    sub_type = payload.get('sub_type')
+    sub_type = payload.get('trigger_sub_type')
     schedule_date = payload.get('schedule_date')
     schedule_time = payload.get('schedule_time')
     interval = payload.get('interval')

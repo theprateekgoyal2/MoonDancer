@@ -5,3 +5,5 @@ __pycache__/*
 .gcloudignore
 plutus-exchange/.idea/*
 .DS_Store
+.vercel
+.env

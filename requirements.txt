@@ -13,13 +13,11 @@ billiard==3.6.4.0
 vine==5.1.0
 
 # Frontend (Streamlit)
-streamlit==1.42.1
-pandas==2.2.3
-numpy==2.0.2
-pyarrow==19.0.1
+streamlit --no-deps
 
 # Utility Libraries
 requests==2.31.0
 pytz==2025.1
 python-dateutil==2.9.0.post0
 Werkzeug==2.2.3
+python-dotenv==1.0.1

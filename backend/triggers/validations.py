@@ -54,7 +54,7 @@ def validate_trigger_update_payload(trigger: Triggers, payload: dict) -> dict:
 
     trigger_type = trigger.trigger_type
 
-    sub_type = payload.get('sub_type')
+    sub_type = payload.get('trigger_sub_type')
     schedule_date = payload.get('schedule_date')
     schedule_time = payload.get('schedule_time')
     interval = payload.get('interval')
