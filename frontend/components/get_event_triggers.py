@@ -1,4 +1,3 @@
-import pandas as pd
 import streamlit as st
 from .constants import TriggerTypeValue, SubTypeValue
 from .update_trigger import show_edit_screen
@@ -76,11 +75,41 @@ def display_triggers(trigger_type: str, sub_type: str):
 
     st.write(f"✅ Found {triggers['total_triggers']} triggers")
 
-    df = pd.DataFrame(triggers.get('triggers'))
-    apply_table_styling()
+    trigger_list = triggers.get("triggers", [])
 
-    for _, row in df.iterrows():
-        display_trigger_row(row)
+    if not trigger_list:
+        st.write("No triggers found.")
+        return
+
+    # Define table headers
+    headers = list(trigger_list[0].keys()) + ["Actions"]
+
+    # Create table layout
+    cols = st.columns(len(headers))
+
+    # Render headers
+    for col, header in zip(cols, headers):
+        col.write(f"**{header}**")
+
+    # Render table rows
+    for row in trigger_list:
+        cols = st.columns(len(headers))
+
+        for col, key in zip(cols[:-1], headers[:-1]):  # Fill data columns
+            col.write(row.get(key, "N/A"))
+
+        trigger_id = row["trigger_id"]
+
+        # Action Buttons
+        with cols[-1]:
+            edit_clicked = st.button("✏️ Edit", key=f"edit_{trigger_id}")
+            delete_clicked = st.button("❌ Delete", key=f"delete_{trigger_id}")
+
+            if edit_clicked:
+                enter_edit_mode(trigger_id, row)
+
+            if delete_clicked:
+                delete_trigger_and_refresh(trigger_id)
 
 
 def apply_table_styling():
@@ -98,27 +127,6 @@ def apply_table_styling():
         """,
         unsafe_allow_html=True,
     )
-
-
-def display_trigger_row(row: any):
-    """
-    Display a row with data and action buttons.
-    """
-
-    col1, col2, col3 = st.columns([5, 1, 1])
-
-    with col1:
-        st.dataframe(pd.DataFrame([row]), hide_index=True)
-
-    trigger_id = row.at["trigger_id"]
-
-    with col2:
-        if st.button("✏️ Edit", key=f"edit_{trigger_id}"):
-            enter_edit_mode(trigger_id, row)
-
-    with col3:
-        if st.button("❌ Delete", key=f"delete_{trigger_id}"):
-            delete_trigger_and_refresh(trigger_id)
 
 
 def enter_edit_mode(trigger_id: str, row: any):

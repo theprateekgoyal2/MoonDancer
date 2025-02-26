@@ -51,7 +51,7 @@ def handle_scheduled_trigger():
 
         if trigger_date and trigger_time:
             datetime_value = datetime.combine(trigger_date, trigger_time)
-            st.write("Selected DateTime:", datetime_value)
+            st.write(f"Selected DateTime: {str(datetime_value)}")
 
     return option1, time_selected, datetime_value, time_interval
 

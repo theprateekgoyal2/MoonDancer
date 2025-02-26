@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime, time, date
-from .constants import TriggerTypeValue
+from .constants import TriggerTypeValue, SubTypeValue
 from frontend.apis.apis import update_trigger
 
 
@@ -46,12 +46,12 @@ def handle_scheduled_trigger() -> dict:
 
         if trigger_date and trigger_time:
             new_schedule_date = datetime.combine(trigger_date, trigger_time)
-            st.write("Selected DateTime:", new_schedule_date)
+            st.write(f'Selected DateTime: {str(new_schedule_date)}')
 
     return {
-        "trigger_sub_type": new_trigger_sub_type,
-        "schedule_time": new_schedule_time,
-        "schedule_date": new_schedule_date,
+        "trigger_sub_type": SubTypeValue.get(new_trigger_sub_type),
+        "schedule_time": str(new_schedule_time) if new_schedule_time else None,
+        "schedule_date": str(new_schedule_date) if new_schedule_date else None,
         "interval": float(new_interval) if new_interval else None
     }
 
