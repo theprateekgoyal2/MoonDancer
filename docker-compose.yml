@@ -9,7 +9,7 @@ services:
       - "6379:6379"
   app:
     build: .
-    container_name: monorepo_app
+    container_name: moondancer_app
     ports:
       - "5000:5000"   # Flask Backend
       - "8501:8501"   # Streamlit Frontend
