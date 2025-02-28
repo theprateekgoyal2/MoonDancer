@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Event Trigger Management API
+  description: API for managing triggers and retrieving event logs
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+paths:
+  /api/triggers:
+    get:
+      summary: Retrieve all triggers
+      operationId: getTriggers
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      summary: Create a new trigger
+      operationId: createTrigger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Trigger created
+    put:
+      summary: Update an existing trigger
+      operationId: updateTrigger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Trigger updated
+    delete:
+      summary: Delete a trigger
+      operationId: deleteTrigger
+      parameters:
+        - name: triggerId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Trigger deleted
+
+  /api/triggers/fire:
+    get:
+      summary: Fire a trigger
+      operationId: fireTrigger
+      responses:
+        "200":
+          description: Trigger fired
+
+  /api/triggers/event/logs:
+    get:
+      summary: Retrieve event logs
+      operationId: getEventLogs
+      responses:
+        "200":
+          description: Event logs retrieved
