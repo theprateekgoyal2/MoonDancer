@@ -1,50 +1,21 @@
-# +required The configuration file schema version
-schemaVersion: 1.1
+# +required Version of the endpoint configuration YAML
+version: 0.1
 
-# +optional Incoming connection details for the component
+# +required List of endpoints to create
 endpoints:
-  # Flask Backend API
-  - name: flask-backend
-    displayName: Flask Backend API
-    service:
-      basePath: /api
-      port: 5000
+# +required Unique name for the endpoint. (This name will be used when generating the managed API)
+  - name: Event Trigger Management API
+    # +required Numeric port value that gets exposed via this endpoint
+    port: 5000
+    # +required Type of the traffic this endpoint is accepting. Example: REST, GraphQL, etc.
+    # Allowed values: REST, GraphQL, GRPC
     type: REST
-    networkVisibilities:
-      - Public
-      - Organization
+    # +optional Network level visibility of this endpoint. Defaults to Project
+    # Accepted values: Project|Organization|Public.
+    networkVisibility: Public
+    # +optional Context (base path) of the API that is exposed via this endpoint.
+    # This is mandatory if the endpoint type is set to REST or GraphQL.
+    schemaFilePath: openapi.yaml
 
-  # Streamlit Frontend UI
-  - name: streamlit-frontend
-    displayName: Streamlit UI
-    service:
-      basePath: /
-      port: 8501
-    type: REST
-    networkVisibilities:
-      - Public
-      - Organization
-
-# +optional Outgoing connection details for the component.
-dependencies:
-  # Redis for Celery
-  connectionReferences:
-    - name: redis-connection
-      resourceRef: service:/RedisService/RedisComponent/v1/ad088/PUBLIC
-
-# +optional Defines runtime configurations
-configuration:
-  # Environment Variables
-  env:
-    - name: FLASK_ENV
-      value: production
-    - name: CELERY_BROKER_URL
-      valueFrom:
-        connectionRef:
-          name: redis-connection
-          key: RedisURL
-    - name: CELERY_RESULT_BACKEND
-      valueFrom:
-        connectionRef:
-          name: redis-connection
-          key: RedisURL
+    # represents context relevant to the service
+    context: /rs
