@@ -1,0 +1,50 @@
+# +required The configuration file schema version
+schemaVersion: 1.1
+
+# +optional Incoming connection details for the component
+endpoints:
+  # Flask Backend API
+  - name: flask-backend
+    displayName: Flask Backend API
+    service:
+      basePath: /api
+      port: 5000
+    type: REST
+    networkVisibilities:
+      - Public
+      - Organization
+
+  # Streamlit Frontend UI
+  - name: streamlit-frontend
+    displayName: Streamlit UI
+    service:
+      basePath: /
+      port: 8501
+    type: REST
+    networkVisibilities:
+      - Public
+      - Organization
+
+# +optional Outgoing connection details for the component.
+dependencies:
+  # Redis for Celery
+  connectionReferences:
+    - name: redis-connection
+      resourceRef: service:/RedisService/RedisComponent/v1/ad088/PUBLIC
+
+# +optional Defines runtime configurations
+configuration:
+  # Environment Variables
+  env:
+    - name: FLASK_ENV
+      value: production
+    - name: CELERY_BROKER_URL
+      valueFrom:
+        connectionRef:
+          name: redis-connection
+          key: RedisURL
+    - name: CELERY_RESULT_BACKEND
+      valueFrom:
+        connectionRef:
+          name: redis-connection
+          key: RedisURL
