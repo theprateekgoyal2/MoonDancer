@@ -17,15 +17,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Change ownership of working directory to the non-root user
 RUN chown -R appuser:appgroup /app
 
+# Copy entrypoint script & change permissions BEFORE switching users
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Switch to non-root user
 USER 10014
 
 # Expose necessary ports
 EXPOSE 5000 8501
-
-# Copy entrypoint script & make it executable
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 # Run the entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]
