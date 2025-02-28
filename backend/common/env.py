@@ -16,3 +16,5 @@ SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD') or os.getenv('REDIS_PASSWORD')
 REDIS_USER = os.environ.get('REDIS_USER') or os.getenv('REDIS_USER')
+
+REDIS_IP = os.environ.get('REDIS_IP') or os.getenv('REDIS_IP')

@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)).split("celery_config")[0])
+
 import logging
 from celery_config import celery
 from celery.schedules import crontab
