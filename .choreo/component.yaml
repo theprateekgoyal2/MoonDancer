@@ -4,8 +4,8 @@ schemaVersion: 1.1
 # +optional Incoming connection details for the component
 endpoints:
   # Flask Backend API
-  - name: Event Trigger Management API
-    displayName: Event Trigger Management API
+  - name: event trigger management api
+    displayName: event trigger management api
     service:
       basePath: /api
       port: 5000
