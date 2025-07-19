@@ -8,24 +8,27 @@ WORKDIR /app
 RUN groupadd -g 10014 appgroup && \
     useradd -m -u 10014 -g appgroup appuser
 
-# Copy project files
-COPY . .
+COPY requirements.txt .
+
+# Upgrade pip
+RUN pip install --upgrade pip
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
+
+# Copy project files
+COPY . .
 
 # Change ownership of working directory to the non-root user
 RUN chown -R appuser:appgroup /app
 
-# Copy entrypoint script & change permissions BEFORE switching users
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod a+x entrypoint.sh
 
 # Switch to non-root user
 USER 10014
 
 # Expose necessary ports
-EXPOSE 5000 8501
+EXPOSE 8080 8501
 
 # Run the entrypoint script
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]

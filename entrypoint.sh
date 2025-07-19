@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # Set PYTHONPATH so imports work correctly
-ENV PYTHONPATH="/app"
+# ENV PYTHONPATH="/app"
 
 # Start Flask Backend
-python backend/main.py --server.port=5000 --server.address=0.0.0.0 &
+python backend/main.py --server.port=8080 --server.address=0.0.0.0 &
 
 # Start Streamlit Frontend
 streamlit run frontend/app.py --server.port=8501 --server.address=0.0.0.0 &
